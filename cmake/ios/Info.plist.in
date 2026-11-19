@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Info.plist template for the iOS app (MACOSX_BUNDLE_INFO_PLIST in CMakeLists.txt).
+
+  Two kinds of placeholders are used:
+    ${MACOSX_BUNDLE_...}  filled in by CMake at configure time
+    $(EXECUTABLE_NAME)    filled in by Xcode at build time
+
+  NOTE: this file could not be validated in the Linux development sandbox
+  (no Xcode / plutil). Run `plutil -lint` on the generated Info.plist the first
+  time you build on a Mac.
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>hy</string>
+        <string>ru</string>
+    </array>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleName</key>
+    <string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+    <key>CFBundleDisplayName</key>
+    <string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
+    <key>CFBundleVersion</key>
+    <string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+
+    <!-- iPhone, portrait only. Qt Quick lays out against the safe area. -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UIStatusBarHidden</key>
+    <false/>
+
+    <!-- Empty launch screen dictionary: iOS shows a plain system-colored screen. -->
+    <key>UILaunchScreen</key>
+    <dict/>
+
+    <!-- Shown by iOS the first time Face ID is requested (app lock). Required,
+         otherwise LAContext evaluation fails on Face ID devices. -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>Personal Finance uses Face ID to keep your financial data private.</string>
+
+    <!-- The app only uses encryption provided by the operating system (Keychain,
+         data protection). Confirm this matches your own distribution before
+         submitting to App Store Connect. -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+
+    <!-- Bank SMS import
+         1. App Group shared with the App Intents extension (ios/IntentsExtension). PF_APP_GROUP_ID is
+            an Xcode build setting defined in CMakeLists.txt (group.<bundle id>).
+         2. URL scheme for the fallback hand-over (personalfinance://import?...), used when the silent
+            extension route is not available. Any app can open such a URL, so the app treats
+            messages that arrive this way as untrusted and asks the user to confirm them. -->
+    <key>PFAppGroupIdentifier</key>
+    <string>$(PF_APP_GROUP_ID)</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>personalfinance</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

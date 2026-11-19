@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements shared by the app and the App Intents extension. The App Group is how the extension
+  (which runs while the app does not) hands SMS to the app. $(PF_APP_GROUP_ID) = group.<bundle id>.
+  Needs the "App Groups" capability in your Apple Developer account - see docs/BUILD_IOS.md for what
+  is and is not available with a free Apple ID.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>$(PF_APP_GROUP_ID)</string>
+    </array>
+</dict>
+</plist>

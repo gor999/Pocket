@@ -1,0 +1,64 @@
+// Bank-SMS import: end-to-end architecture. Render with:  dot -Tsvg docs/sms_architecture.dot -o docs/sms_architecture.svg
+// Blue = verified by tests on Linux. Orange dashed = iOS-only code that has NOT been built or run (no Mac/iPhone in the sandbox).
+digraph sms_import {
+    rankdir=TB; nodesep=0.35; ranksep=0.45;
+    fontname="Helvetica"; fontsize=12; labelloc=t;
+    label="Personal Finance - automatic bank SMS import (all processing on the device)";
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#EEF1FF", color="#4F46E5"];
+    edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+    subgraph cluster_ios {
+        label="iPhone - outside the app (iOS-only, UNTESTED)"; style="dashed,rounded"; color="#F5A524"; fontcolor="#B26A00";
+        node [fillcolor="#FFF4E0", color="#F5A524", style="rounded,filled,dashed"];
+        sms   [label="Bank SMS\n(IDBank / Ameriabank / ACBA / other)"];
+        auto  [label="Shortcuts Message automation\nfilter: Message Contains <bank word>\n'Run Immediately' (one-time setup by the user)"];
+        ext   [label="App Intents extension (Swift, no Qt)\n'Import Bank SMS'  openAppWhenRun = false\nInboxWriter: atomic JSON, file protection"];
+        group [label="App Group container\ninbox/<uuid>.json", shape=folder];
+        url   [label="Tier B fallback: Open URL\npersonalfinance://import?body=...\n(app comes to foreground)"];
+        sms -> auto [label="iOS message trigger"];
+        auto -> ext [label="Shortcut Input -> Message, Sender, Bank"];
+        ext -> group [label="writes, app NOT running"];
+        auto -> url [style=dashed, label="if the silent route is unavailable"];
+    }
+
+    subgraph cluster_app {
+        label="Personal Finance app (Qt 6 / C++20 / QML) - tested on Linux"; style="rounded"; color="#4F46E5"; fontcolor="#4F46E5";
+
+        subgraph cluster_receivers {
+            label="Receivers (platform-specific compilation)"; style="rounded,dotted"; color="#999999";
+            iosrx  [label="IOSBankTransactionReceiver (.mm)\nApp Group path, no-backup flag", style="rounded,filled,dashed", fillcolor="#FFF4E0", color="#F5A524"];
+            dirrx  [label="DirectoryInboxReceiver\nenvelope reader, watcher, poll\ndelete only after sink OK"];
+            deskrx [label="DesktopBankTransactionReceiver\nfolder next to the database\nor PF_SMS_INBOX"];
+            urlh   [label="UrlImportHandler\nchannel = url_scheme (untrusted)"];
+            iosrx -> dirrx [label="is-a"]; deskrx -> dirrx [label="is-a"];
+        }
+        trigger [label="App becomes active\n(+ folder watcher / 15 s poll)", shape=ellipse, fillcolor="#FFFFFF"];
+
+        subgraph cluster_pipeline {
+            label="SmsImportService::process()"; style="rounded,dotted"; color="#999999";
+            san    [label="1 Sanitize\nclean, size limit, mask card numbers\ndrop OTP / secrets (never stored)\nPF-TEST -> link check"];
+            ident  [label="2 Identify bank\nShortcut hint, else text/sender score"];
+            parse  [label="3 BankSmsParser\nIDBank / Ameriabank / ACBA templates\n+ bank-agnostic generic fallback\nhy / ru / en, amount, currency, direction,\nmerchant, card last 4, date, balance, confidence"];
+            dup    [label="4 Duplicates\nenvelope id - same text <=120 s\nexact fingerprint - near match <=10 min -> review"];
+            acct   [label="5 Account\nmatch bank+currency+last4\nauto-create if allowed"];
+            cat    [label="6 Categorize (on device rules)\nMerchantNormalizer + user rules (prio 1000)\n+ starter rules; confidence >= 70 applies,\nlower = suggestion only"];
+            store  [label="7 Store (one DB transaction)\nTransactionService.add\nsms_imports row: status, reason, source, timestamps"];
+            san -> ident -> parse -> dup -> acct -> cat -> store;
+        }
+        db    [label="SQLite\ntransactions - sms_imports\ncategorization_rules - settings", shape=cylinder, fillcolor="#E8F7EE", color="#0F9F4F"];
+        am    [label="ApplicationManager (App)\nrevision++ -> monthly stats,\nbalances, (budgets: Phase 3)"];
+        qml   [label="QML 'Bank SMS import'\nstatus - banks - setup steps\nreview list - history - errors"];
+    }
+
+    group -> iosrx [label="read when the app runs"];
+    url -> urlh [style=dashed, label="QFileOpenEvent"];
+    deskrx -> trigger [style=invis];
+    trigger -> dirrx [label="processPending()"];
+    dirrx -> san [label="IncomingSms"];
+    urlh -> san [style=dashed];
+    store -> db;
+    db -> am; am -> qml;
+    qml -> cat [style=dashed, label="user picks category,\n'remember merchant'"];
+    desk [label="Developer: drop an envelope\nfile into the folder (Linux/macOS)", shape=note, fillcolor="#FFFFFF", color="#999999"];
+    desk -> deskrx [style=dotted];
+}

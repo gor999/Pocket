@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Info.plist of the App Intents extension (ExtensionKit-based). NOT validated in the Linux sandbox:
+  run `plutil -lint` on the generated copy, and compare with the plist Xcode generates for a fresh
+  "App Intents Extension" target if the build complains.
+  $(...) values are Xcode build settings; PF_APP_GROUP_ID is set by CMakeLists.txt.
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Personal Finance Shortcuts</string>
+    <key>CFBundleDisplayName</key>
+    <string>Personal Finance Shortcuts</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <key>EXAppExtensionAttributes</key>
+    <dict>
+        <key>EXExtensionPointIdentifier</key>
+        <string>com.apple.appintents-extension</string>
+    </dict>
+
+    <!-- Same key as in the app: the shared App Group id. -->
+    <key>PFAppGroupIdentifier</key>
+    <string>$(PF_APP_GROUP_ID)</string>
+</dict>
+</plist>
